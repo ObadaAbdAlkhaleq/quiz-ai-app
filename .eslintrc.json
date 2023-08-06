@@ -17,7 +17,7 @@
     "jsx-a11y/anchor-is-valid": "off",
     "no-unused-vars": "warn",
     "@typescript-eslint/no-empty-interface": "warn",
-    "indent": ["error", 4],
+    "indent": ["error", 2],
     "import/extensions": 0,
     "import/no-extraneous-dependencies": 0,
     "import/prefer-default-export": 0
