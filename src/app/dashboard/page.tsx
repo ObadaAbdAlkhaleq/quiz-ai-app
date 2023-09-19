@@ -3,6 +3,8 @@ import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import QuizCard from "@/components/dashboard/QuizCard";
 import HistoryCard from "@/components/dashboard/HistoryCard";
+import HotTopicsCard from "./HotTopicsCard";
+import RecentActivities from "./RecentActivities";
 
 export const metadata: Metadata = {
   title: 'Dashboard'
@@ -22,7 +24,10 @@ const DashboardPage = async () => {
         <QuizCard />
         <HistoryCard />
       </div>
-      <div className="grid gap-4 mt-4 md:grid-cols-2 lg:grid-cols-7"></div>
+      <div className="grid gap-4 mt-4 md:grid-cols-2 lg:grid-cols-7">
+        <HotTopicsCard />
+        <RecentActivities />
+      </div>
     </main>
   );
 };
