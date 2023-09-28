@@ -1,9 +1,9 @@
 'use client';
 
 import { useForm } from "react-hook-form";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { z } from 'zod';
-import { createQuizSchema } from "@/schemas/form/quiz";
+import { quizCreationSchema } from "@/schemas/forms/quiz";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
@@ -13,18 +13,34 @@ import {
   FormItem,
   FormLabel,
   FormMessage
-} from "./ui/form";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
+} from "../ui/form";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
 import { BookOpen, CopyCheck } from "lucide-react";
-import { Separator } from "./ui/separator";
+import { Separator } from "../ui/separator";
+import { useMutation } from '@tanstack/react-query';
+import axios from "axios";
+import { useRouter } from "next/navigation";
 
 
-type Input = z.infer<typeof createQuizSchema>;
+type Input = z.infer<typeof quizCreationSchema>;
 
-const CreateQuiz = () => {
+const QuizCreation = () => {
+
+  const router = useRouter();
+
+  const { mutate: getQuestions, isLoading } = useMutation({
+    mutationFn: async ({ amount, topic, type }: Input) => {
+
+      const response = await axios.post('/api/game', {
+        amount, topic, type
+      });
+      return response.data;
+    }
+  });
+
   const form = useForm<Input>({
-    resolver: zodResolver(createQuizSchema),
+    resolver: zodResolver(quizCreationSchema),
     defaultValues: {
       amount: 3,
       topic: '',
@@ -33,7 +49,19 @@ const CreateQuiz = () => {
   });
 
   function onSubmit(input: Input) {
-    alert(JSON.stringify(input, null, 2));
+    getQuestions({
+      amount: input.amount,
+      topic: input.topic,
+      type: input.type
+    }, {
+      onSuccess: ({ gameId }) => {
+        if (form.getValues('type') === 'mcq') {
+          router.push(`/play/mcq/${gameId}`);
+        } else if (form.getValues('type') === 'open_ended') {
+          router.push(`/play/open_ended/${gameId}`);
+        }
+      }
+    });
   }
 
   form.watch();
@@ -111,7 +139,7 @@ const CreateQuiz = () => {
                   <BookOpen className="w-4 h-4 mr-2" /> Open Ended
                 </Button>
               </div>
-              <Button type="submit">Submit</Button>
+              <Button disabled={ isLoading } type="submit">Submit</Button>
             </form>
           </Form>
         </CardContent>
@@ -120,4 +148,4 @@ const CreateQuiz = () => {
   );
 };
 
-export default CreateQuiz;
+export default QuizCreation;
