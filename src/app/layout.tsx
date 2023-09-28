@@ -23,16 +23,18 @@ export default function RootLayout({
       <body
         className={ cn(inter.className, "antialiased min-h-screen pt-16") }
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <Providers>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
 
-          <Navbar />
-          { children }
-        </ThemeProvider>
+            <Navbar />
+            { children }
+          </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );
