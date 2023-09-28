@@ -1,4 +1,4 @@
-import CreateQuiz from "@/components/CreateQuiz";
+import QuizCreation from "@/components/forms/QuizCreation";
 import { getSession } from "@/lib/nextauth";
 import { Metadata } from "next";
 import { redirect } from 'next/navigation';
@@ -13,7 +13,7 @@ const QuizPage = async () => {
     return redirect('/');
   }
   return (
-    <CreateQuiz />
+    <QuizCreation />
   );
 };
 
