@@ -1,10 +1,15 @@
 'use client';
 import { Game, Question } from "@prisma/client";
-import { ChevronRight, Timer } from "lucide-react";
+import { ChevronRight, Loader2, Timer } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "./ui/button";
 import MCQCounter from "./MCQCounter";
+import { useMutation } from "@tanstack/react-query";
+import axios from "axios";
+import { z } from "zod";
+import { checkAnswerSchema } from "@/schemas/questions";
+import { useToast } from "./ui/use-toast";
 
 type Props = {
   game: Game & { questions: Pick<Question, 'id' | 'question' | 'options'>[]; };
@@ -12,9 +17,70 @@ type Props = {
 
 
 const MCQ = ({ game }: Props) => {
-  // console.log(game);
-  const [ questionIndex, setQuestionIndex ] = useState(0);
+  const { toast } = useToast();
+
+  const [ questionIndex, setQuestionIndex ] = useState<number>(0);
   const [ selectedChoice, setSelectedChoice ] = useState<number>(0);
+  const [ correctAnswer, setCorrectAnswer ] = useState<number>(0);
+  const [ wrongAnswer, setWrongAnswer ] = useState<number>(0);
+  const [ hasEnded, setHasEnded ] = useState<boolean>(false);
+
+  const { mutate: checkAnswer, isLoading: isChecking } = useMutation({
+    mutationFn: async () => {
+      const payload: z.infer<typeof checkAnswerSchema> = {
+        questionId: currentQuestion.id,
+        userInput: options[ selectedChoice ]
+      };
+      const response = await axios.post('/api/checkAnswer', payload);
+      return response.data;
+    }
+  });
+
+  const handleNext = useCallback(() => {
+    if (isChecking) return;
+    checkAnswer(undefined, {
+      onSuccess: ({ isCorrect }) => {
+        if (isCorrect) {
+          setCorrectAnswer((prev) => prev + 1);
+          toast({
+            title: "Correct!",
+            description: "You got it right",
+            variant: 'default',
+          });
+        } else {
+          setWrongAnswer((prev) => prev + 1);
+          toast({
+            title: "Incorrect",
+            description: "You got it wrong",
+            variant: 'destructive',
+          });
+        }
+        if (questionIndex === game.questions.length - 1) {
+          setHasEnded(true);
+          return;
+        }
+        setQuestionIndex((prev) => prev + 1);
+        setSelectedChoice(10);
+      }
+    });
+  }, [ checkAnswer, toast, isChecking, questionIndex, game.questions.length ]);
+
+  useEffect(() => {
+    document.addEventListener('keydown', event => {
+      if (event.key == '1') {
+        setSelectedChoice(0);
+      } else if (event.key == '2') {
+        setSelectedChoice(1);
+
+      } else if (event.key == '3') {
+        setSelectedChoice(2);
+      } else if (event.key == '4') {
+        setSelectedChoice(3);
+      } else if (event.key == 'Enter') {
+        handleNext();
+      }
+    });
+  });
 
   const currentQuestion = useMemo(() => {
     return game.questions[ questionIndex ];
@@ -30,7 +96,7 @@ const MCQ = ({ game }: Props) => {
     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 md:w-[80vw] max-w-4xl w-[90vw]">
       <div className="flex flex-row justify-between">
         <div className="flex flex-col">
-          <p>
+          <p className="mb-2">
             <span className="text-slate-400 mr-2">Topic</span>
             <span className="px-2 py-1 text-white rounded-lg bg-slate-800">
               { game.topic }
@@ -42,8 +108,8 @@ const MCQ = ({ game }: Props) => {
           </div>
         </div>
         <MCQCounter
-          correctAnswer={ 0 }
-          wrongAnswer={ 3 }
+          correctAnswer={ correctAnswer }
+          wrongAnswer={ wrongAnswer }
         />
       </div>
 
@@ -80,7 +146,12 @@ const MCQ = ({ game }: Props) => {
             </Button>
           );
         }) }
-        <Button className="mt-2" onClick={ () => { setQuestionIndex(questionIndex + 1); } }>
+        <Button
+          className="mt-2"
+          disabled={ isChecking }
+          onClick={ () => { handleNext(); } }
+        >
+          { isChecking && <Loader2 className="w-4 h-4 mr-2 animate-spin" /> }
           Next <ChevronRight className="w-4 h-4 ml-2" />
         </Button>
 
