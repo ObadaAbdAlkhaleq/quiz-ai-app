@@ -1,15 +1,18 @@
 'use client';
 import { Game, Question } from "@prisma/client";
-import { ChevronRight, Loader2, Timer } from "lucide-react";
+import { differenceInSeconds } from "date-fns";
+import { BarChart, ChevronRight, Loader2, Timer } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "./ui/button";
+import { Button, buttonVariants } from "./ui/button";
 import MCQCounter from "./MCQCounter";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { z } from "zod";
 import { checkAnswerSchema } from "@/schemas/questions";
 import { useToast } from "./ui/use-toast";
+import Link from "next/link";
+import { cn, formatTimeDelta } from "@/lib/utils";
 
 type Props = {
   game: Game & { questions: Pick<Question, 'id' | 'question' | 'options'>[]; };
@@ -17,13 +20,25 @@ type Props = {
 
 
 const MCQ = ({ game }: Props) => {
-  const { toast } = useToast();
 
   const [ questionIndex, setQuestionIndex ] = useState<number>(0);
   const [ selectedChoice, setSelectedChoice ] = useState<number>(0);
   const [ correctAnswer, setCorrectAnswer ] = useState<number>(0);
   const [ wrongAnswer, setWrongAnswer ] = useState<number>(0);
   const [ hasEnded, setHasEnded ] = useState<boolean>(false);
+  const [ now, setNow ] = useState<Date>(new Date());
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const intreval = setInterval(() => {
+      if (!hasEnded) {
+        setNow(new Date());
+      }
+    }, 1000);
+    return () => {
+      clearInterval(intreval);
+    };
+  }, [ hasEnded ]);
 
   const { mutate: checkAnswer, isLoading: isChecking } = useMutation({
     mutationFn: async () => {
@@ -92,6 +107,20 @@ const MCQ = ({ game }: Props) => {
     return JSON.parse(currentQuestion.options as string) as string[];
   }, [ currentQuestion ]);
 
+  if (hasEnded) {
+    return (
+      <div className="absolute flex flex-col justify-center top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="px-4 mt-2 font-semibold text-white bg-green-600 rounded-md whitespace-nowrap">
+          You completed in { "3m 4s" }
+        </div>
+        <Link href={ `/statistics/${game.id}` } className={ cn(buttonVariants(), 'mt-2') }>
+          View Statistics
+          <BarChart className="w-4 h-4 ml-2" />
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 md:w-[80vw] max-w-4xl w-[90vw]">
       <div className="flex flex-row justify-between">
@@ -104,7 +133,7 @@ const MCQ = ({ game }: Props) => {
           </p>
           <div className="flex self-start text-slate-400">
             <Timer className="mr-2" />
-            <span>00:00</span>
+            { formatTimeDelta(differenceInSeconds(now, game.timeStarted)) }
           </div>
         </div>
         <MCQCounter
