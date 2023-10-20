@@ -12,7 +12,7 @@ const Navbar = async () => {
 	// 	return <pre>{ JSON.stringify(session.user, null, 2) }</pre>;
 	// }
 	// else{}
-	return <div className="fixed inset-x-0 5 top-0  z-10 h-fit border-b border-zinc-300 py-2">
+	return <div className="fixed inset-x-0 5 top-0 bg-background z-10 h-fit border-b border-zinc-300 py-2">
 		<div className="flex items-center justify-between h-full gap-2 px-8 mx-auto max-w-7xl">
 			<Link href={ '/' } className="flex items-center gap-2">
 				<p className="rounded-lg border-2 border-b-4 border-r-4 border-black px-3 py-1 text-xl font-bold transition-all md:block hover:-translate-y-[2px] dark:border-white">
