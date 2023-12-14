@@ -19,21 +19,25 @@ import { Button } from "../ui/button";
 import { BookOpen, CopyCheck } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { useMutation } from '@tanstack/react-query';
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import LoadingQuiz from "../LoadingQuiz";
+import { useToast } from "../ui/use-toast";
 
+type Props = {
+  topicParam: string;
+};
 
 type Input = z.infer<typeof quizCreationSchema>;
 
-const QuizCreation = () => {
+const QuizCreation = ({ topicParam }: Props) => {
 
   const router = useRouter();
 
   const [ showLoader, setShowLoader ] = useState(false);
   const [ finished, setFinished ] = useState(false);
-
+  const { toast } = useToast();
   const { mutate: getQuestions, isLoading } = useMutation({
     mutationFn: async ({ amount, topic, type }: Input) => {
 
@@ -48,17 +52,17 @@ const QuizCreation = () => {
     resolver: zodResolver(quizCreationSchema),
     defaultValues: {
       amount: 3,
-      topic: '',
+      topic: topicParam,
       type: 'mcq'
     }
   });
 
-  function onSubmit(input: Input) {
+  const onSubmit = async (data: Input) => {
     setShowLoader(true);
     getQuestions({
-      amount: input.amount,
-      topic: input.topic,
-      type: input.type
+      amount: data.amount,
+      topic: data.topic,
+      type: data.type
     }, {
       onSuccess: ({ gameId }) => {
         setFinished(true);
@@ -68,13 +72,22 @@ const QuizCreation = () => {
           } else if (form.getValues('type') === 'open_ended') {
             router.push(`/play/open_ended/${gameId}`);
           }
-        }, 1000);
+        }, 2000);
       },
-      onError: () => {
+      onError: (error: any) => {
         setShowLoader(false);
+        if (error instanceof AxiosError) {
+          if (error.response?.status === 500) {
+            toast({
+              title: 'Error',
+              description: `${error}`,
+              variant: 'destructive',
+            });
+          }
+        }
       }
     });
-  }
+  };
 
   form.watch();
 

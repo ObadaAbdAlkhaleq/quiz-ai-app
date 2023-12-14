@@ -3,8 +3,8 @@ import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import QuizCard from "@/components/dashboard/QuizCard";
 import HistoryCard from "@/components/dashboard/HistoryCard";
-import HotTopicsCard from "./HotTopicsCard";
-import RecentActivities from "./RecentActivities";
+import HotTopicsCard from "../../components/dashboard/HotTopicsCard";
+import RecentActivities from "../../components/dashboard/RecentActivities";
 
 export const metadata: Metadata = {
   title: 'Dashboard'

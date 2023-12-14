@@ -1,11 +1,15 @@
 import History from "@/components/History";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { prisma } from "@/lib/db";
-import { getSession } from "next-auth/react";
+import { getSession } from "@/lib/nextauth";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 const RecentActivities = async () => {
   const session = await getSession();
+  if (!session?.user) {
+    return redirect('/');
+  }
 
   const gameCount = await prisma.game.count({
     where: {
@@ -15,7 +19,9 @@ const RecentActivities = async () => {
   return (
     <Card className="col-span-4 lg:col-span-3">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold">Recent Activities</CardTitle>
+        <CardTitle className="text-2xl font-bold">
+          <Link href={ '/history' }>Recent Activities</Link>
+        </CardTitle>
         <CardDescription>
           You have played a total of { gameCount } games.
         </CardDescription>
